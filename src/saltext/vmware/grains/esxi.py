@@ -19,7 +19,6 @@ GRAINS_CACHE = {}
 
 
 def __virtual__():
-
     # import salt.utils.proxy again
     # so it is available for tests.
     import salt.utils.proxy
@@ -27,6 +26,7 @@ def __virtual__():
     try:
         if salt.utils.proxy.is_proxytype(__opts__, "esxi"):
             import salt.modules.vsphere
+
             return __virtualname__
     except KeyError:
         pass
@@ -36,6 +36,12 @@ def __virtual__():
 
 def esxi():
     return _grains()
+
+
+def osfinger():
+    if not GRAINS_CACHE:
+        GRAINS_CACHE.update(_grains())
+    return {"osfinger": f'{GRAINS_CACHE["name"]}-{GRAINS_CACHE["version"]}'}
 
 
 def kernel():
