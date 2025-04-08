@@ -2,7 +2,6 @@
 import logging
 
 import salt.exceptions
-from config_modules_vmware.interfaces.metadata_interface import ControllerMetadataInterface
 
 log = logging.getLogger(__name__)
 
@@ -10,7 +9,11 @@ __virtualname__ = "vmware_controller_metadata"
 
 
 def __virtual__():
-    return __virtualname__
+    try:
+        from config_modules_vmware.interfaces.metadata_interface import ControllerMetadataInterface
+        return __virtualname__
+    except ImportError:
+        return False
 
 
 def validate(controller_metadata):

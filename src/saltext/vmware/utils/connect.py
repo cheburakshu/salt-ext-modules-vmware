@@ -28,6 +28,7 @@ def get_config(config, profile=None, esxi_host=None):
         config.get("saltext.vmware")
         or config.get("grains", {}).get("saltext.vmware")
         or config.get("pillar", {}).get("saltext.vmware")
+        or config.get("proxy", {})
         or {}
     )
     if not conf:
@@ -54,8 +55,8 @@ def get_config(config, profile=None, esxi_host=None):
         ssl_thumbprint = credentials.get("ssl_thumbprint")
     else:
         host = os.environ.get("SALTEXT_VMWARE_HOST") or credentials.get("host")
-        password = os.environ.get("SALTEXT_VMWARE_PASSWORD") or credentials.get("password")
-        user = os.environ.get("SALTEXT_VMWARE_USER") or credentials.get("user")
+        password = os.environ.get("SALTEXT_VMWARE_PASSWORD") or credentials.get("password") or credentials.get("passwords")[0]
+        user = os.environ.get("SALTEXT_VMWARE_USER") or credentials.get("user") or credentials.get("username")
         ssl_thumbprint = credentials.get("ssl_thumbprint")
 
     if host is None or password is None or user is None:
@@ -132,9 +133,7 @@ def get_service_instance(*, config, esxi_host=None, profile=None):
     """
     ctx = ssl._create_unverified_context()
     config = config or {}
-
     config = get_config(config=config, profile=profile, esxi_host=esxi_host)
-
     service_instance = connect.SmartConnect(
         host=config.get("host"),
         user=config.get("user"),

@@ -264,11 +264,15 @@ for standing up an ESXi host from scratch.
 """
 import logging
 import os
+import ssl
 
 from salt.exceptions import InvalidConfigError
 from salt.exceptions import SaltSystemExit
 from salt.utils.dictupdate import merge
 from saltext.vmware.config.schemas.esxi import EsxiProxySchema
+import saltext.vmware.modules.vsphere
+
+from pyVim import connect
 
 # This must be present or the Salt loader won't load this module.
 __proxyenabled__ = ["esxi"]
@@ -443,7 +447,6 @@ def ping():
 
         salt esxi-host test.ping
     """
-    log.debug("==== details %s ====", DETAILS)
     if DETAILS.get("esxi_host"):
         return True
     else:
@@ -451,12 +454,7 @@ def ping():
         if DETAILS["mechanism"] == "userpass":
             find_credentials(DETAILS["host"])
             try:
-                __salt__["vmware_info.system_info"](
-                    host=DETAILS["host"],
-                    username=DETAILS["username"],
-                    password=DETAILS["password"],
-                    verify_ssl=DETAILS["verify_ssl"],
-                )
+                saltext.vmware.modules.vsphere.system_info(service_instance=DETAILS["service_instance"])
             except SaltSystemExit as err:
                 log.warning(err)
                 return False
@@ -508,6 +506,19 @@ def ch_config(cmd, *args, **kwargs):
         return __salt__["vsphere." + cmd](*args, **kwargs)
 
 
+def _get_service_instance(host, user, password, verify_ssl=False):
+    ssl_ctx = None
+    if not verify_ssl:
+        ssl_ctx = ssl._create_unverified_context()
+    service_instance = connect.SmartConnect(
+        host=host,
+        user=user,
+        pwd=password,
+        sslContext=ssl_ctx,
+    )
+    return service_instance
+
+
 def find_credentials(host):
     """
     Cycle through all the possible credentials and return the first one that
@@ -520,9 +531,8 @@ def find_credentials(host):
         for password in passwords:
             try:
                 # Try to authenticate with the given user/password combination
-                ret = __salt__["vmware_info.system_info"](
-                    host=host, username=user, password=password, verify_ssl=verify_ssl
-                )
+                service_instance = _get_service_instance(host=host, user=user, password=password, verify_ssl=verify_ssl)
+                ret = saltext.vmware.modules.vsphere.system_info(service_instance=service_instance)
             except SaltSystemExit:
                 # If we can't authenticate, continue on to try the next password.
                 continue
@@ -530,6 +540,7 @@ def find_credentials(host):
             if ret:
                 DETAILS["username"] = user
                 DETAILS["password"] = password
+                DETAILS["service_instance"] = service_instance
                 return user, password
     # We've reached the end of the list without successfully authenticating.
     raise SaltSystemExit("Cannot complete login due to an incorrect user name or password.")
@@ -539,17 +550,7 @@ def _grains(host, protocol=None, port=None, verify_ssl=None):
     """
     Helper function to the grains from the proxied device.
     """
-    username, password = find_credentials(DETAILS["host"])
-    verify_ssl = DETAILS["verify_ssl"]
-
-    ret = __salt__["vmware_info.system_info"](
-        host=host,
-        username=username,
-        password=password,
-        protocol=protocol,
-        port=port,
-        verify_ssl=verify_ssl,
-    )
+    ret = saltext.vmware.modules.vsphere.system_info(service_instance=DETAILS["service_instance"])
     GRAINS_CACHE.update(ret)
     return GRAINS_CACHE
 

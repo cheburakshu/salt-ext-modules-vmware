@@ -26,6 +26,7 @@ def __virtual__():
 
     try:
         if salt.utils.proxy.is_proxytype(__opts__, "esxi"):
+            import salt.modules.vsphere
             return __virtualname__
     except KeyError:
         pass
@@ -72,7 +73,7 @@ def _find_credentials(host):
         for password in passwords:
             try:
                 # Try to authenticate with the given user/password combination
-                ret = __salt__["vmware_info.system_info"](
+                ret = salt.modules.vsphere.system_info(
                     host=host, username=user, password=password, verify_ssl=verify_ssl
                 )
             except SaltSystemExit:
@@ -96,7 +97,7 @@ def _grains():
             protocol = __pillar__["proxy"].get("protocol")
             port = __pillar__["proxy"].get("port")
             verify_ssl = __pillar__["proxy"].get("verify_ssl")
-            ret = __salt__["vmware_info.system_info"](
+            ret = salt.modules.vsphere.system_info(
                 host=host,
                 username=username,
                 password=password,

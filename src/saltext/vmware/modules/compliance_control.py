@@ -3,7 +3,6 @@ import logging
 
 import salt.exceptions
 import saltext.vmware.utils.compliance_control as compliance_control_util
-from config_modules_vmware.interfaces.controller_interface import ControllerInterface
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +10,11 @@ __virtualname__ = "vmware_compliance_control"
 
 
 def __virtual__():
-    return __virtualname__
+    try:
+        from config_modules_vmware.interfaces.controller_interface import ControllerInterface
+        return __virtualname__
+    except ImportError:
+        return False
 
 
 def control_config_compliance_check(control_config, product, auth_context=None):

@@ -4,6 +4,7 @@ import logging
 import os
 
 import salt.exceptions
+import salt.utils.dictupdate as dictupdate
 import saltext.vmware.utils.common as utils_common
 import saltext.vmware.utils.connect as utils_connect
 import saltext.vmware.utils.esxi as utils_esxi
@@ -20,6 +21,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
+__proxyenabled__ = ["vmware_esxi", "esxi"]
 __virtualname__ = "vmware_vsphere"
 
 DEFAULT_EXCEPTIONS = (

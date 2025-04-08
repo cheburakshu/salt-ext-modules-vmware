@@ -21,6 +21,7 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
+__proxyenabled__ = ["vmware_esxi", "esxi"]
 __virtualname__ = "vmware_esxi"
 
 DEFAULT_EXCEPTIONS = (
