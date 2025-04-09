@@ -3,10 +3,6 @@ import json
 import logging
 
 import saltext.vmware.utils.compliance_control as compliance_control_util
-from config_modules_vmware.framework.models.output_models.compliance_response import (
-    ComplianceStatus,
-)
-from config_modules_vmware.framework.models.output_models.remediate_response import RemediateStatus
 
 log = logging.getLogger(__name__)
 
@@ -15,6 +11,13 @@ __proxyenabled__ = ["vmware_compliance_control"]
 
 
 def __virtual__():
+    try:
+        from config_modules_vmware.framework.models.output_models.compliance_response import (
+            ComplianceStatus,
+        )
+        from config_modules_vmware.framework.models.output_models.remediate_response import RemediateStatus
+    except ImportError:
+        return False
     return __virtualname__
 
 
